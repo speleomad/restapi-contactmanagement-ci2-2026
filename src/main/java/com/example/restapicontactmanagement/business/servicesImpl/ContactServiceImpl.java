@@ -3,21 +3,27 @@ package com.example.restapicontactmanagement.business.servicesImpl;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import com.example.restapicontactmanagement.business.services.ContactService;
 import com.example.restapicontactmanagement.dao.entities.Contact;
 import com.example.restapicontactmanagement.dao.repositories.ContactRepository;
+import com.example.restapicontactmanagement.exceptions.DuplicateContactException;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class ContactServiceImpl implements ContactService {
-    /*/ @Autowired
-     private  ContactRepository contactRepository;*/
+    /*
+     * / @Autowired
+     * private ContactRepository contactRepository;
+     */
 
     private final ContactRepository contactRepository;
+
     public ContactServiceImpl(ContactRepository contactRepository) {
         this.contactRepository = contactRepository;
     }
@@ -36,21 +42,26 @@ public class ContactServiceImpl implements ContactService {
         }
         // Retrieve the contact by ID, throw an EntityNotFoundException if not found
         return this.contactRepository.findById(id)
-               .orElseThrow(() -> new EntityNotFoundException("Contact with id: " + id + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Contact with id: " + id + " not found"));
     }
 
-    @Override
-    public Contact addContact(Contact contact) {
+    public Contact addContact(Contact contact) throws DuplicateContactException {
         // Check if the contact is null and throw an IllegalArgumentException if it is
         if (contact == null) {
             throw new IllegalArgumentException("Contact cannot be null");
         }
+        try {
             // Save the contact in the repository
             return contactRepository.save(contact);
+        } catch (DataIntegrityViolationException e) {
+            // Handle uniqueness constraint violations
+            throw new DuplicateContactException(
+                    "A contact with the same email or other unique field already exists.");
+        }
     }
 
-    @Override
-    public Contact updateContact(Long id, Contact contact) {
+      @Override
+    public Contact updateContact(Long id, Contact contact) throws DuplicateContactException {
         // Check if the ID or contact is null and throw an IllegalArgumentException if they are
         if (id == null || contact == null) {
             throw new IllegalArgumentException("ID or Contact cannot be null");
@@ -59,8 +70,14 @@ public class ContactServiceImpl implements ContactService {
         // Verify the existence of the contact
         getContactById(id);
 
-        // Save the updated contact in the repository
-        return contactRepository.save(contact);
+        try {
+            // Save the updated contact in the repository
+            return contactRepository.save(contact);
+        } catch (DataIntegrityViolationException e) {
+            // Handle uniqueness constraint violations
+            throw new DuplicateContactException(
+                    "A contact with the same email or other unique field already exists.");
+        }
     }
 
     @Override
@@ -69,9 +86,9 @@ public class ContactServiceImpl implements ContactService {
         if (id == null) {
             throw new IllegalArgumentException("ID cannot be null");
         }
-            // Retrieve the contact by ID
-            Contact contact=this.getContactById(id);
-            // Delete the contact from the repository by ID
-            contactRepository.delete(contact);
+        // Retrieve the contact by ID
+        Contact contact = this.getContactById(id);
+        // Delete the contact from the repository by ID
+        contactRepository.delete(contact);
     }
 }

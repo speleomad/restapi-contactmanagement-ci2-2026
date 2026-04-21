@@ -1,4 +1,4 @@
-package com.example.restapicontactmanagement.web.controllers.dto;
+package com.example.restapicontactmanagement.web.dto;
 
 import java.util.List;
 

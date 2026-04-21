@@ -1,4 +1,4 @@
-package com.example.restapicontactmanagement.web.controllers.dto;
+package com.example.restapicontactmanagement.web.dto;
 
 import com.example.restapicontactmanagement.dao.entities.Contact;
 import lombok.Builder;
